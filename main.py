@@ -3,13 +3,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import PySimpleGUI as sg
 import os
+import urllib.request
+import io
 
 # Funkcja do wczytania pliku z danymi
 def load_data():
     layout = [
         [sg.Text('Wybierz plik z danymi:', font=('Helvetica', 12))],
         [sg.Input(), sg.FileBrowse()],
-        [sg.OK(), sg.Cancel()]
+        [sg.Button('Kontynuuj ze standardowymi danymi'), sg.OK(), sg.Cancel()]
     ]
     window = sg.Window('Wczytaj plik z danymi', layout)
     event, values = window.read()
@@ -24,6 +26,15 @@ def load_data():
                 sg.popup_error('Błąd wczytywania pliku!')
         else:
             sg.popup_error('Plik nie istnieje!')
+    elif event == 'Kontynuuj ze standardowymi danymi':
+        url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv'
+        try:
+            with urllib.request.urlopen(url) as response:
+                data = response.read().decode('utf-8')
+                df = pd.read_csv(io.StringIO(data), delimiter=';')
+                return df
+        except:
+            sg.popup_error('Błąd pobierania danych standardowych!')
     return None
 
 # Wczytanie danych
