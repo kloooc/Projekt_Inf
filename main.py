@@ -49,12 +49,37 @@ def compute_stats(column):
 
 # Function to compute correlations between features
 def compute_correlation():
+    selected_features = values['-LIST-']
+    if len(selected_features) == 1:
+        feature = selected_features[0]
+        corr = df.corr()[feature]
+        plt.figure(figsize=(12, 10))
+        plt.bar(corr.index, corr.values)
+        plt.title('Correlation with {}'.format(feature))
+        plt.xticks(rotation=90)
+        plt.show()
+    elif len(selected_features) == 2:
+        feature1, feature2 = selected_features
+        corr = df[[feature1, feature2]].corr()
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1, fmt='.3f')
+        plt.title('Feature Correlation')
+        plt.show()
+    elif len(selected_features) > 2:
+        corr = df.corr()
+        plt.figure(figsize=(15, 12))  # Adjust the figsize as per your preference
+        sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1, fmt='.3f')
+        plt.title('Feature Correlation')
+        plt.show()
+    else:
+        sg.popup_error('Please select at least one feature.')
+
+def compute_correlations():
     corr = df.corr()
-    plt.figure(figsize=(12, 10))
-    sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
+    plt.figure(figsize=(11, 8))
+    sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1, fmt='.3f')
     plt.title('Feature Correlation')
     plt.show()
-
 
 # Function to display statistical measures in a new window
 def display_stats(selected_features):
@@ -91,6 +116,7 @@ layout = [
     [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
     [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-')],
     [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
+    [sg.Button('Display All Correlations', font=('Helvetica', 12), disabled=False, key='-ALL_CORRELATIONS-')],
     [sg.Button('Exit', font=('Helvetica', 12))]
 ]
 
@@ -103,11 +129,18 @@ while True:
     elif event == '-LIST-':
         window['-STATS-'].update(disabled=False)
         window['-CORRELATION-'].update(disabled=False)
+        window['-ALL_CORRELATIONS-'].update(disabled=False)
     elif event == '-STATS-':
         selected_features = values['-LIST-']
         if selected_features:
             display_stats(selected_features)
     elif event == '-CORRELATION-':
-        compute_correlation()
+        selected_features = values['-LIST-']
+        if len(selected_features) == 1 or len(selected_features) == 2:
+            compute_correlation()
+        else:
+            sg.popup_error('Please select either one or two features.')
+    elif event == '-ALL_CORRELATIONS-':
+        compute_correlations()
 
 window.close()
