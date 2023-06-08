@@ -27,15 +27,15 @@ def load_data():
         else:
             sg.popup_error('Plik nie istnieje!')
     elif event == 'Kontynuuj ze standardowymi danymi':
-        url = 'https://archive.ics.uci.edu/ml/machine-learning-databases/wine-quality/winequality-white.csv'
-        try:
-            with urllib.request.urlopen(url) as response:
-                data = response.read().decode('utf-8')
-                df = pd.read_csv(io.StringIO(data), delimiter=';')
+        filename = 'winequality-white.csv'  # Wprowadź nazwę pliku, jeśli jest inna
+        if os.path.exists(filename):
+            try:
+                df = pd.read_csv(filename, delimiter=';')
                 return df
-        except:
-            sg.popup_error('Błąd pobierania danych standardowych!')
-    return None
+            except:
+                sg.popup_error('Błąd wczytywania pliku!')
+        else:
+            sg.popup_error('Plik nie istnieje!')
 
 # Wczytanie danych
 df = load_data()
@@ -56,11 +56,39 @@ def compute_correlation():
     plt.show()
 
 
+# Funkcja do wyświetlania wyników miar statystycznych w nowym oknie
+def display_stats(selected_features):
+    layout = [
+        [sg.Multiline('', size=(60, 10), key='-OUTPUT-', disabled=True, autoscroll=True)],
+        [sg.Button('OK', font=('Helvetica', 12))]
+    ]
+    window = sg.Window('Wyniki miar statystycznych', layout, finalize=True)  # Ustawienie finalized=True
+
+    output = ""
+    for feature in selected_features:
+        stats = compute_stats(feature)
+        output += 'Miary statystyczne dla cechy {}:'.format(feature) + '\n'
+        output += 'Minimum: {}\n'.format(stats[0])
+        output += 'Maksimum: {}\n'.format(stats[1])
+        output += 'Odchylenie standardowe: {}\n'.format(stats[2])
+        output += 'Mediana: {}\n'.format(stats[3])
+        output += 'Moda: {}\n\n'.format(stats[4])
+
+    window['-OUTPUT-'].update(output)
+
+    while True:
+        event, _ = window.read()
+        if event == sg.WIN_CLOSED or event == 'OK':
+            break
+
+    window.close()
+
+
 # Tworzenie GUI
 sg.theme('DarkBlue3')
 layout = [
     [sg.Text('Wybierz cechę:', font=('Helvetica', 12))],
-    [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True)],
+    [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
     [sg.Button('Wyświetl miary statystyczne', font=('Helvetica', 12), disabled=True, key='-STATS-')],
     [sg.Button('Wyświetl korelację', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
     [sg.Button('Wyjdź', font=('Helvetica', 12))]
@@ -76,11 +104,9 @@ while True:
         window['-STATS-'].update(disabled=False)
         window['-CORRELATION-'].update(disabled=False)
     elif event == '-STATS-':
-        selected_feature = values['-LIST-'][0]
-        stats = compute_stats(selected_feature)
-        sg.popup('Miary statystyczne dla cechy {}:'.format(selected_feature), 'Minimum: {}'.format(stats[0]),
-                 'Maksimum: {}'.format(stats[1]), 'Odchylenie standardowe: {}'.format(stats[2]),
-                 'Mediana: {}'.format(stats[3]), 'Moda: {}'.format(stats[4]))
+        selected_features = values['-LIST-']
+        if selected_features:
+            display_stats(selected_features)
     elif event == '-CORRELATION-':
         compute_correlation()
 
