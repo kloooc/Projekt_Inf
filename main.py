@@ -6,14 +6,14 @@ import os
 import urllib.request
 import io
 
-# Funkcja do wczytania pliku z danymi
+# Function to load data from a file
 def load_data():
     layout = [
-        [sg.Text('Wybierz plik z danymi:', font=('Helvetica', 12))],
+        [sg.Text('Select data file:', font=('Helvetica', 12))],
         [sg.Input(), sg.FileBrowse()],
-        [sg.Button('Kontynuuj ze standardowymi danymi'), sg.OK(), sg.Cancel()]
+        [sg.Button('Continue with standard data'), sg.OK(), sg.Cancel()]
     ]
-    window = sg.Window('Wczytaj plik z danymi', layout)
+    window = sg.Window('Load Data File', layout)
     event, values = window.read()
     window.close()
     if event == 'OK':
@@ -23,56 +23,56 @@ def load_data():
                 df = pd.read_csv(filename, delimiter=';')
                 return df
             except:
-                sg.popup_error('Błąd wczytywania pliku!')
+                sg.popup_error('Error loading the file!')
         else:
-            sg.popup_error('Plik nie istnieje!')
-    elif event == 'Kontynuuj ze standardowymi danymi':
-        filename = 'winequality-white.csv'  # Wprowadź nazwę pliku, jeśli jest inna
+            sg.popup_error('File does not exist!')
+    elif event == 'Continue with standard data':
+        filename = 'winequality-white.csv'  # Enter the file name if different
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, delimiter=';')
                 return df
             except:
-                sg.popup_error('Błąd wczytywania pliku!')
+                sg.popup_error('Error loading the file!')
         else:
-            sg.popup_error('Plik nie istnieje!')
+            sg.popup_error('File does not exist!')
 
-# Wczytanie danych
+# Load the data
 df = load_data()
 if df is None:
     exit()
 
-# Funkcja do obliczenia miar statystycznych dla wybranej kolumny
+# Function to compute statistical measures for a selected column
 def compute_stats(column):
     return [df[column].min(), df[column].max(), df[column].std(), df[column].median(), df[column].mode()[0]]
 
 
-# Funkcja do wyznaczania korelacji między cechami
+# Function to compute correlations between features
 def compute_correlation():
     corr = df.corr()
     plt.figure(figsize=(12, 10))
     sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
-    plt.title('Korelacja cech')
+    plt.title('Feature Correlation')
     plt.show()
 
 
-# Funkcja do wyświetlania wyników miar statystycznych w nowym oknie
+# Function to display statistical measures in a new window
 def display_stats(selected_features):
     layout = [
         [sg.Multiline('', size=(60, 10), key='-OUTPUT-', disabled=True, autoscroll=True)],
         [sg.Button('OK', font=('Helvetica', 12))]
     ]
-    window = sg.Window('Wyniki miar statystycznych', layout, finalize=True)  # Ustawienie finalized=True
+    window = sg.Window('Statistical Measures Results', layout, finalize=True)
 
     output = ""
     for feature in selected_features:
         stats = compute_stats(feature)
-        output += 'Miary statystyczne dla cechy {}:'.format(feature) + '\n'
+        output += 'Statistical measures for feature {}:'.format(feature) + '\n'
         output += 'Minimum: {}\n'.format(stats[0])
-        output += 'Maksimum: {}\n'.format(stats[1])
-        output += 'Odchylenie standardowe: {}\n'.format(stats[2])
-        output += 'Mediana: {}\n'.format(stats[3])
-        output += 'Moda: {}\n\n'.format(stats[4])
+        output += 'Maximum: {}\n'.format(stats[1])
+        output += 'Standard Deviation: {}\n'.format(stats[2])
+        output += 'Median: {}\n'.format(stats[3])
+        output += 'Mode: {}\n\n'.format(stats[4])
 
     window['-OUTPUT-'].update(output)
 
@@ -84,21 +84,21 @@ def display_stats(selected_features):
     window.close()
 
 
-# Tworzenie GUI
+# Create the GUI
 sg.theme('DarkBlue3')
 layout = [
-    [sg.Text('Wybierz cechę:', font=('Helvetica', 12))],
+    [sg.Text('Select feature:', font=('Helvetica', 12))],
     [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
-    [sg.Button('Wyświetl miary statystyczne', font=('Helvetica', 12), disabled=True, key='-STATS-')],
-    [sg.Button('Wyświetl korelację', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
-    [sg.Button('Wyjdź', font=('Helvetica', 12))]
+    [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-')],
+    [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
+    [sg.Button('Exit', font=('Helvetica', 12))]
 ]
 
-window = sg.Window('Analiza danych', layout)
+window = sg.Window('Data Analysis', layout)
 
 while True:
     event, values = window.read()
-    if event == sg.WIN_CLOSED or event == 'Wyjdź':
+    if event == sg.WIN_CLOSED or event == 'Exit':
         break
     elif event == '-LIST-':
         window['-STATS-'].update(disabled=False)
