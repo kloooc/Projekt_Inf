@@ -56,6 +56,16 @@ df = load_data()
 if df is None:
     exit()
 
+def display_bar_plot(column):
+    plt.figure(figsize=(12, 8))
+    plt.xticks(rotation=60, ha='right', fontsize=6)
+    sns.countplot(x=column, data=df)
+    plt.title('Bar Plot for {}'.format(column))
+    plt.xlabel(column)
+    plt.ylabel('Count')
+    plt.tight_layout()  # Poprawa rozmieszczenia etykiet
+    plt.show()
+
 # Function to compute statistical measures for a selected column
 def compute_stats(column):
     return [df[column].min(), df[column].max(), df[column].std(), df[column].median(), df[column].mode()[0]]
@@ -181,7 +191,8 @@ layout = [
      sg.Button('Display Histogram', font=('Helvetica', 12), disabled=True, key='-HISTOGRAM-')],
     [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-'),
      sg.Button('Display Scatter Plot', font=('Helvetica', 12), disabled=True, key='-scatter_plot-')],
-    [sg.Button('Export Data', font=('Helvetica', 12), key='Export_Data')],
+    [sg.Button('Export Data', font=('Helvetica', 12), key='Export_Data'),
+     sg.Button('Display Bar Plot', font=('Helvetica', 12), disabled=True, key='-BAR_PLOT-')],
     [sg.Button('Display All Correlations', font=('Helvetica', 12), disabled=False, key='-ALL_CORRELATIONS-')],
     [sg.Button('Exit', font=('Helvetica', 12))]
 ]
@@ -193,11 +204,28 @@ while True:
     if event == sg.WIN_CLOSED or event == 'Exit':
         break
     elif event == '-LIST-':
-        window['-STATS-'].update(disabled=False)
-        window['-HISTOGRAM-'].update(disabled=False)
-        window['-CORRELATION-'].update(disabled=False)
-        window['-scatter_plot-'].update(disabled=False)
-        window['-ALL_CORRELATIONS-'].update(disabled=False)
+        selected_features = values['-LIST-']
+        if len(selected_features) == 1:
+            window['-STATS-'].update(disabled=False)
+            window['-HISTOGRAM-'].update(disabled=False)
+            window['-CORRELATION-'].update(disabled=False)
+            window['-scatter_plot-'].update(disabled=True)
+            window['-BAR_PLOT-'].update(disabled=False)
+            window['-ALL_CORRELATIONS-'].update(disabled=False)
+        elif len(selected_features) == 2:
+            window['-STATS-'].update(disabled=True)
+            window['-HISTOGRAM-'].update(disabled=True)
+            window['-CORRELATION-'].update(disabled=False)
+            window['-scatter_plot-'].update(disabled=False)
+            window['-BAR_PLOT-'].update(disabled=True)
+            window['-ALL_CORRELATIONS-'].update(disabled=False)
+        else:
+            window['-STATS-'].update(disabled=True)
+            window['-HISTOGRAM-'].update(disabled=True)
+            window['-CORRELATION-'].update(disabled=True)
+            window['-scatter_plot-'].update(disabled=True)
+            window['-BAR_PLOT-'].update(disabled=True)
+            window['-ALL_CORRELATIONS-'].update(disabled=False)
     elif event == '-STATS-':
         selected_features = values['-LIST-']
         if selected_features:
@@ -224,5 +252,11 @@ while True:
         compute_correlations()
     elif event == 'Export_Data':
         export_data()
+    elif event == '-BAR_PLOT-':
+        selected_features = values['-LIST-']
+        if len(selected_features) == 1:
+            display_bar_plot(selected_features[0])
+        else:
+            sg.popup_error('Please select only one feature.')
 
 window.close()
