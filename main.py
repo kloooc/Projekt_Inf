@@ -185,7 +185,7 @@ def display_stats(selected_features):
 # Create the GUI
 sg.theme('DarkBlue3')
 layout = [
-    [sg.Text('Select feature:', font=('Helvetica', 12))],
+    [sg.Text('Select feature: \nHold ctrl / shift to select multiple features', font=('Helvetica', 12))],
     [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
     [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-'),
      sg.Button('Display Histogram', font=('Helvetica', 12), disabled=True, key='-HISTOGRAM-')],
