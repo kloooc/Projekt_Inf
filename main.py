@@ -22,6 +22,12 @@ def load_data():
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, delimiter=';')
+                symbolic_columns = []
+                for column in df.columns:
+                    if df[column].dtype == 'object':
+                        symbolic_columns.append(column)
+                if symbolic_columns:
+                    df[symbolic_columns] = df[symbolic_columns].astype('object')  # Convert symbolic columns to object type
                 return df
             except:
                 sg.popup_error('Error loading the file!')
@@ -32,11 +38,18 @@ def load_data():
         if os.path.exists(filename):
             try:
                 df = pd.read_csv(filename, delimiter=';')
+                symbolic_columns = []
+                for column in df.columns:
+                    if df[column].dtype == 'object':
+                        symbolic_columns.append(column)
+                if symbolic_columns:
+                    df[symbolic_columns] = df[symbolic_columns].astype('object')  # Convert symbolic columns to object type
                 return df
             except:
                 sg.popup_error('Error loading the file!')
         else:
             sg.popup_error('File does not exist!')
+
 
 # Load the data
 df = load_data()
@@ -47,6 +60,26 @@ if df is None:
 def compute_stats(column):
     return [df[column].min(), df[column].max(), df[column].std(), df[column].median(), df[column].mode()[0]]
 
+def display_histogram(column):
+    plt.figure(figsize=(8, 6))
+    plt.hist(df[column], bins=10, color='green')
+    plt.title('Histogram for {}'.format(column))
+    plt.xlabel(column)
+    plt.ylabel('Frequency')
+    plt.show()
+
+def scatter_plot():
+    elected_features = values['-LIST-']
+    if len(selected_features) == 2:
+        feature1, feature2 = selected_features
+        plt.figure(figsize=(8, 6))
+        plt.scatter(df[feature1], df[feature2])
+        plt.title('Scatter Plot: {} vs {}'.format(feature1, feature2))
+        plt.xlabel(feature1)
+        plt.ylabel(feature2)
+        plt.show()
+    else:
+        sg.popup_error('Please select at least one feature.')
 
 # Function to compute correlations between features
 def compute_correlation():
@@ -144,8 +177,10 @@ sg.theme('DarkBlue3')
 layout = [
     [sg.Text('Select feature:', font=('Helvetica', 12))],
     [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
-    [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-')],
-    [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
+    [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-'),
+     sg.Button('Display Histogram', font=('Helvetica', 12), disabled=True, key='-HISTOGRAM-')],
+    [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-'),
+     sg.Button('Display Scatter Plot', font=('Helvetica', 12), disabled=True, key='-scatter_plot-')],
     [sg.Button('Export Data', font=('Helvetica', 12), key='Export_Data')],
     [sg.Button('Display All Correlations', font=('Helvetica', 12), disabled=False, key='-ALL_CORRELATIONS-')],
     [sg.Button('Exit', font=('Helvetica', 12))]
@@ -159,12 +194,26 @@ while True:
         break
     elif event == '-LIST-':
         window['-STATS-'].update(disabled=False)
+        window['-HISTOGRAM-'].update(disabled=False)
         window['-CORRELATION-'].update(disabled=False)
+        window['-scatter_plot-'].update(disabled=False)
         window['-ALL_CORRELATIONS-'].update(disabled=False)
     elif event == '-STATS-':
         selected_features = values['-LIST-']
         if selected_features:
             display_stats(selected_features)
+    elif event == '-HISTOGRAM-':
+        selected_features = values['-LIST-']
+        if len(selected_features) == 1:
+            display_histogram(selected_features[0])
+        else:
+            sg.popup_error('Please select only one feature.')
+    elif event == '-scatter_plot-':
+        selected_features = values['-LIST-']
+        if len(selected_features) == 2:
+            scatter_plot()
+        else:
+            sg.popup_error('Please select only two feature.')
     elif event == '-CORRELATION-':
         selected_features = values['-LIST-']
         if len(selected_features) == 1 or len(selected_features) == 2:
