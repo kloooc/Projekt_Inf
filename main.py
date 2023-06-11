@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import PySimpleGUI as sg
+import openpyxl
 import os
 import urllib.request
 import io
@@ -61,18 +62,47 @@ def compute_correlation():
     elif len(selected_features) == 2:
         feature1, feature2 = selected_features
         corr = df[[feature1, feature2]].corr()
-        plt.figure(figsize=(12, 10))
-        sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1, fmt='.3f')
-        plt.title('Feature Correlation')
-        plt.show()
-    elif len(selected_features) > 2:
-        corr = df.corr()
-        plt.figure(figsize=(15, 12))  # Adjust the figsize as per your preference
+        plt.figure(figsize=(7, 4))
         sns.heatmap(corr, annot=True, cmap='coolwarm', vmin=-1, vmax=1, fmt='.3f')
         plt.title('Feature Correlation')
         plt.show()
     else:
         sg.popup_error('Please select at least one feature.')
+
+
+def export_data():
+    data2 = df.values.tolist()
+    headers = df.columns.tolist()
+    layout = [
+        [sg.Table(values=data2, headings=headers, max_col_width=25,
+                  auto_size_columns=True, display_row_numbers=True,
+                  justification='left', num_rows=min(25, len(data2)))],
+        [sg.Text('Select columns to export:', font=('Helvetica', 12))],
+        [sg.Listbox(df.columns[:-1], size=(30, 6), key='-EXPORT-COLUMNS-', select_mode='multiple')],
+        [sg.Text('Select row range to export:', font=('Helvetica', 12))],
+        [sg.InputText('1', key='-EXPORT-START-'), sg.Text('to'), sg.InputText(str(len(df)), key='-EXPORT-END-')],
+        [sg.Button('Export', font=('Helvetica', 12)), sg.Button('Cancel', font=('Helvetica', 12))]
+    ]
+    window = sg.Window('Export Data', layout)
+    event, values = window.read()
+    window.close()
+
+    if event == 'Export':
+        selected_columns = values['-EXPORT-COLUMNS-']
+        start_row = int(values['-EXPORT-START-'])
+        end_row = int(values['-EXPORT-END-'])
+
+        if selected_columns:
+            export_df = df[selected_columns][start_row - 1:end_row]
+            export_filename = sg.popup_get_file('Save As', save_as=True, default_extension='.xlsx',
+                                                file_types=(('Excel Files', '*.xlsx'),))
+
+            if export_filename:
+                export_df.to_excel(export_filename, index=False)
+                sg.popup('Data successfully exported to Excel file!')
+        else:
+            sg.popup_error('Please select at least one column to export.')
+
 
 def compute_correlations():
     corr = df.corr()
@@ -116,6 +146,7 @@ layout = [
     [sg.Listbox(df.columns[:-1], size=(30, 6), key='-LIST-', enable_events=True, select_mode='extended')],
     [sg.Button('Display Statistical Measures', font=('Helvetica', 12), disabled=True, key='-STATS-')],
     [sg.Button('Display Correlation', font=('Helvetica', 12), disabled=True, key='-CORRELATION-')],
+    [sg.Button('Export Data', font=('Helvetica', 12), key='Export_Data')],
     [sg.Button('Display All Correlations', font=('Helvetica', 12), disabled=False, key='-ALL_CORRELATIONS-')],
     [sg.Button('Exit', font=('Helvetica', 12))]
 ]
@@ -142,5 +173,7 @@ while True:
             sg.popup_error('Please select either one or two features.')
     elif event == '-ALL_CORRELATIONS-':
         compute_correlations()
+    elif event == 'Export_Data':
+        export_data()
 
 window.close()
